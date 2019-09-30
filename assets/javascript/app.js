@@ -47,8 +47,11 @@ var scheduleTableFields = ["train-name", "train-destination", "train-frequency",
 /* ===============[ 1. Functions ]=======================*/
 /**
  * 1.1 firebaseWatcher
- * @param {*} databaseReference 
- * @param {*} onChange - can be 'value' or 'child_added'
+ * Watches firebase database for either a 'value' or 'child_added' and fetches fields that match scheduleTableFields 
+ * array and saves them to tableData. Then finally calls updateTrainSchedule(tableData) when event occurs.
+ * 
+ * @param {firebase.database().ref("/child")} databaseReference 
+ * @param {string} onChange - can be 'value' or 'child_added'
  */
 var firebaseWatcher = function(databaseReference, onChange="child_added"){
   // set default database reference to our global dbRef
@@ -66,7 +69,7 @@ var firebaseWatcher = function(databaseReference, onChange="child_added"){
         if(scheduleTableFields.includes(property)){
           tableData[property] = snap.val()[property];
         }
-
+        
       }
     }
 
@@ -84,6 +87,7 @@ var firebaseWatcher = function(databaseReference, onChange="child_added"){
 
 /**
  * 1.2 updateTrainSchedule
+ * Adds a row to #train-schedule table body. 
  * @param {object} tableRowObj - properties in this object must be inside the global scheduleTableFields
  */
 var updateTrainSchedule = function(tableRowObj){
@@ -106,13 +110,13 @@ var updateTrainSchedule = function(tableRowObj){
 
 /**
  * 1.3 addTrain
- * Gets form data from #add-train-form adds it to the database
+ * Gets form data from #add-train-form adds it to the database.
  * @param {object} event 
  */
 function addTrain(event){
   event.preventDefault();
 
-  var formArray = $(this).serializeArray(); // $("#add-train-form").serializeArray();
+  var formArray = $("#add-train-form").serializeArray();
   var formData = {}; // NOTE: {} creates and object and [] creates an Array.
 
   for (var i in formArray){
@@ -141,7 +145,7 @@ function addTrain(event){
     $(this).val("");
   });
 
-} // addTrain
+} // END addTrain
 
 /**===============[ 2. Document Ready ]==================== 
  * NOTE: $(function(){ === $(document).ready(function() {
@@ -154,4 +158,4 @@ $(function(){
   // 2.2 Add Train on Submit
   $('#add-train-form').submit(addTrain);
   
-});
+}); // END document ready
