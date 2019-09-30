@@ -1,0 +1,217 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="assets/images/icons8-rock-and-roll-hand-32.png" rel="shortcut icon">
+  <meta name="description"
+    content="This app will display up-to-date sample data for arrival and departure times for trains. This includes how many minutes until next arrival as the data will be updated real-time. New trains can be added to the scheduler by administrators.">
+  <title>Train Scheduler</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,900|Ubuntu" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <script src="https://kit.fontawesome.com/fece22d596.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link href="assets/css/style.css?v=1.0.2" rel="stylesheet">
+
+  <!-- Firebase References -->
+  <script src="https://www.gstatic.com/firebasejs/6.6.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/6.0.4/firebase-database.js"></script>
+
+</head>
+
+<body class="page-template">
+  <!-- Header -->
+  <header id="main-header">
+    <div class="container-fluid clearfix">
+      <!-- Main Navbar -->
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="main-nav">
+        <a class="navbar-brand mb-0 h1" href="/">Train Scheduler</a>
+
+        <div class="collapse navbar-collapse show">
+          <ul class="navbar-nav ml-auto">
+            <!-- Links -->
+            <li class="nav-item active">
+              <a class="nav-link" href="#add" onclick="alert('Add New Train!'); ">Add Train</a>
+            </li>
+          </ul>
+        </div><!-- .navbar-collapse -->
+      </nav><!-- #main-nav -->
+
+      <!-- Mobile Navbar -->
+      <div class="pos-f-t navbar-dark" id="mobile-nav">
+        <!-- Navbar brand -->
+        <a class="navbar-brand mb-0 h1" href="#">Train Scheduler</a>
+
+        <nav class="navbar navbar-dark bg-dark">
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleMenu"
+            aria-controls="navbarToggleMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </nav>
+
+        <div class="collapse navbar-collapse" id="navbarToggleMenu">
+          <div class="bg-dark p-3">
+            <ul class="navbar-nav mr-auto">
+              <li class="nav-item active">
+                <a class="nav-link" href="#add" onclick="alert('Add New Train!'); ">Add Train</a>
+              </li>
+            </ul>
+          </div><!-- .bg-dark -->
+        </div><!-- #navbarToggleMenu -->
+      </div><!-- #mobile-nav -->
+
+    </div><!-- .container-fluid -->
+  </header><!-- #main-header -->
+
+  <!-- Main Container -->
+  <article class="content-wrapper container" id="main-container">
+
+    <section class="section-block jumbotron" id="title-section">
+      <h1 class="text-center">
+        <i class="fas fa-train"></i><strong> Train Scheduler</strong>
+      </h1>
+    </section><!-- .jumbotron -->
+
+    <!-- Current Train Schedule -->
+    <section class="section-block row" id="main-section">
+      <div class="col-lg-12">
+        <div class="card bg-dark">
+          <div class="card-header text-white">
+            <i class="far fa-calendar-alt"></i><strong> Current Train Schedule</strong>
+          </div>
+
+          <div class="card-body bg-light">
+            <table class="table table-striped" id="train-schedule">
+              <thead class="thead-dark">
+                <tr>
+                  <th scope="col">Train Name</th>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Frequency (min)</th>
+                  <th scope="col">Next Arrival</th>
+                  <th scope="col">Minutes Away</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Trenton Express</td>
+                  <td>Trenton</td>
+                  <td>25</td>
+                  <td>05:35 PM</td>
+                  <td>10</td>
+                </tr>
+                <tr>
+                  <td>Trenton Express</td>
+                  <td>Trenton</td>
+                  <td>25</td>
+                  <td>05:35 PM</td>
+                  <td>10</td>
+                </tr>
+              </tbody>
+            </table>
+          </div><!-- .card-body -->
+        </div><!-- .card -->
+
+
+      </div>
+    </section><!-- #main-section -->
+
+    <!-- Add Train -->
+    <section class="section-block row" id="add-train-section">
+      <div class="col-lg-12">
+        <div class="card bg-dark">
+          <div class="card-header text-white">
+            <i class="fa fa-list-alt"></i><strong> Add Train</strong>
+          </div>
+
+          <div class="card-body bg-light">
+            <form rol="form" id="add-train-form">
+              <div class="form-group">
+                <label for="train-name">Train Name</label>
+                <input type="text" class="form-control" id="train-name" name="train-name">
+              </div>
+
+              <div class="form-group">
+                <label for="train-destination">Destination</label>
+                <input type="text" class="form-control" id="train-destination" name="train-destination">
+              </div>
+
+              <div class="form-group">
+                <label for="train-start-time">First Train Time (HH:mm - miliary time)</label>
+                <input type="text" class="form-control" id="train-start-time" name="train-start-time">
+              </div>
+
+              <div class="form-group">
+                <label for="train-frequency">Frequency</label>
+                <input type="text" class="form-control" id="train-frequency" name="train-frequency">
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="add-train">Submit <i class="fas fa-plus"></i></button>
+
+            </form><!-- #add-train-form -->
+          </div><!-- .card-body -->
+        </div><!-- .card -->
+      </div>
+    </section><!-- #add-train-section -->
+
+  </article><!-- #main-container -->
+
+  <!-- Footer -->
+  <footer id="main-footer">
+    <!-- Footer Nav -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="footer-nav">
+      <div class="navbar-collapse">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="https://www.linkedin.com/in/ccollins1544/" target="_blank"
+              rel="noopener noreferrer">
+              <i class="fab fa-linkedin fa-2x"></i>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="https://dev.to/ccollins" target="_blank">
+              <i class="fab fa-dev fa-2x" title="ccollins's DEV Profile"></i>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="https://ccollins1544.github.io/">
+              <i class="fab fa-github fa-2x"></i>
+            </a>
+          </li>
+        </ul>
+      </div><!-- .container -->
+    </nav><!-- #footer-nav -->
+
+    <!-- Footer Credits -->
+    <div id="footer-bottom">
+      <div id="footer-info">Copyright © 2019 | <a class="footer-link" href="index.html">Christopher Collins</a> |
+        <a class="footer-link" href="https://github.com/ccollins1544/train-scheduler">Coding Bootcamp</a>
+      </div>
+    </div><!-- #footer-bottom -->
+  </footer><!-- #main-footer -->
+
+  <!-- Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
+
+  <!-- App JS -->
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="assets/javascript/app.js?v=1.0.0" type="text/javascript"></script>
+
+</body>
+
+</html>
