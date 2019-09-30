@@ -585,7 +585,7 @@ section#title-section.jumbotron {
   padding-bottom: 0px;
 }
 
-#main-section.card-body {
+#main-section .card-body {
   padding: 0px;
 }
 
