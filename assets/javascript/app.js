@@ -15,11 +15,18 @@
  *   1.1 firebaseWatcher
  *   1.2 updateTrainSchedule
  *   1.3 addTrain
+ *   1.4 trainMinutesAway
  * 
  * 2. Document Ready
  *   2.1 Watch Database + Initial Loader
  *   2.2 Add Train on Submit
  * 
+ * @todo
+ * -Calculate 'next-arrival' and 'minutes-away' from 'train-frequncy' and 'train-start-time'.
+ * 
+ * -Update 'next-arrival' and 'minutes-away' every minute. 
+ * -Add [update] and [remove] buttons for each train. Updating should allow changing: name, destination, and arrival time (where arrival time is relation to first-train-time).
+ * -Make so only users that log into the site with their google or github accounts can use your site. Check out Firebase authentication.
  *********************************************************/
 /* ===============[ 0. GLOBALS ]=========================*/
 /**
@@ -62,21 +69,31 @@ var firebaseWatcher = function(databaseReference, onChange="child_added"){
     // console.log(snap.val());
     
     var tableData = {};
+    var firstTime = false;
     for (var property in snap.val()){
       if(snap.val().hasOwnProperty(property)){
         // console.log(property + " : " + snap.val()[property]);
 
         if(scheduleTableFields.includes(property)){
           tableData[property] = snap.val()[property];
+
+        }else if(property === "train-start-time"){
+          firstTime = snap.val()[property];
         }
-        
+
       }
     }
 
-    tableData['next-arrival'] = "7:00";
-    tableData['minutes-away'] = "7";
+    // Calculate 'next-arrival' time and 'minutes-away' 
+    if(firstTime !== false && tableData.hasOwnProperty('train-frequency')) {
+      var minutesAway = trainMinutesAway(firstTime, tableData["train-frequency"]);
+      var nextTrain = moment().add(minutesAway, "minutes");
 
-    console.log(tableData);
+      tableData['next-arrival'] = moment(nextTrain).format("HH:mm");
+      tableData['minutes-away'] = minutesAway;
+    }
+
+    console.log("TableData", tableData);
     updateTrainSchedule(tableData);
 
   }, function (errorObject){
@@ -146,6 +163,30 @@ function addTrain(event){
   });
 
 } // END addTrain
+
+/**
+ * 1.4 trainMinutesAway
+ * @param {string} firstTime - first time train runs HH:mm [military time]
+ * @param {integer} minFrequency - 
+ * @return {integer} minutesAway - time in minutes until next train. 
+ */
+var trainMinutesAway = function(firstTime, minFrequency) {
+  if(firstTime === undefined || minFrequency === undefined ){ return; }
+  
+  // First Time (pushed back 1 year to make sure it comes before current time)
+  var firstTimeConverted = moment(firstTime, "HH:mm").subtract(1, "years");
+  
+  // Difference between the times
+  var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
+  
+  // Time apart (remainder)
+  var tRemainder = diffTime % minFrequency;
+  
+  // Minute Until Train
+  var minutesAway = minFrequency - tRemainder;
+
+  return minutesAway;
+} // END trainMinutesAway
 
 /**===============[ 2. Document Ready ]==================== 
  * NOTE: $(function(){ === $(document).ready(function() {

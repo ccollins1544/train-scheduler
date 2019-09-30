@@ -594,6 +594,10 @@ section#title-section.jumbotron {
   background-color: var(--body-text);
 }
 
+#train-schedule.table {
+  margin-bottom: 0px;
+}
+
 #train-schedule.table .thead-dark th {
   border-color: var(--primary-menu-background);
   background-color: var(--body-text);
