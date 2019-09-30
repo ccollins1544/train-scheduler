@@ -9,7 +9,8 @@
  * 0. Globals
  *   0.1 Firebase Configuration
  *   0.2 Initialize Firebase
- *   0.3 scheduleTableFields
+ *   0.3 Firebase Authentication
+ *   0.4 scheduleTableFields
  * 
  * 1. Functions
  *   1.1 firebaseWatcher
@@ -18,6 +19,7 @@
  *   1.4 trainMinutesAway
  *   1.5 updateTrainSchedule
  *   1.6 startClock
+ *   1.7 SignOut
  * 
  * 2. Document Ready
  *   2.1 Watch Database + Initial Loader
@@ -48,7 +50,44 @@ firebase.initializeApp(firebaseConfig);
 var fdb = firebase.database();
 var dbRef = fdb.ref("/trainScheduler");
 
-// 0.3 scheduleTableFields 
+// 0.3 Firebase Authentication
+// Initialize the FirebaseUI Widget using Firebase.
+var ui = new firebaseui.auth.AuthUI(firebase.auth());
+
+ui.start('#firebaseui-auth-container', {
+  signInOptions: [{
+      provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+      requireDisplayName: false
+    },
+    {
+      provider: firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+      scopes: [
+        'https://www.googleapis.com/auth/contacts.readonly'
+      ],
+      customParameters: {
+        // Forces account selection even when one account
+        // is available.
+        prompt: 'select_account'
+      }
+    },
+    firebase.auth.GithubAuthProvider.PROVIDER_ID
+  ]
+});
+
+// Get the currently signed-in user
+var User = firebase.auth().currentUser;
+if (User) {
+  // User is signed in.
+  $("#sign-in").hide();
+  $("#sign-out").show();
+
+} else {
+  // No user is signed in.
+  $("#sign-in").show();
+  $("#sign-out").hide();
+}
+
+// 0.4 scheduleTableFields 
 var scheduleTableFields = ["train-name", "train-destination", "train-frequency", "next-arrival", "minutes-away"];
 
 /* ===============[ 1. Functions ]=======================*/
@@ -196,9 +235,11 @@ var trainMinutesAway = function (firstTime, minFrequency) {
  */
 var updateTrainSchedule = function () {
   dbRef.once('value', (snapshot) => {
-  
-    if (snapshot.numChildren() === 0) { return; }
-    
+
+    if (snapshot.numChildren() === 0) {
+      return;
+    }
+
     $("#train-schedule > tbody").empty();
     snapshot.forEach(function (snap) {
 
@@ -242,13 +283,27 @@ var updateTrainSchedule = function () {
  * Displays current time and continues counting the seconds. 
  * @param {string} divSelector - defaults to #clock
  */
-var startClock = function(divSelector){
+var startClock = function (divSelector) {
   divSelector = (divSelector === undefined) ? "#clock" : divSelector;
-  setInterval(function(){
-    $(divSelector).html(moment().format('MMMM D, YYYY H:mm:ss A'));
-  },
-  1000);
+  setInterval(function () {
+      $(divSelector).html(moment().format('MMMM D, YYYY H:mm:ss A'));
+    },
+    1000);
 }; // END startClock
+
+/**
+ * 1.7 SignOut
+ */
+var SignOut = function () {
+  firebase.auth().signOut().then(function () {
+    // Sign-out successful.
+    console.log("Sign-out Successful");
+
+  }).catch(function (error) {
+    // An error happened.
+    console.log("An Error happened", error);
+  });
+}; // END SignOut
 
 /**===============[ 2. Document Ready ]==================== 
  * NOTE: $(function(){ === $(document).ready(function() {
