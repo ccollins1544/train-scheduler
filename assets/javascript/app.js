@@ -19,7 +19,8 @@
  *   1.4 trainMinutesAway
  *   1.5 updateTrainSchedule
  *   1.6 startClock
- *   1.7 SignOut
+ *   1.7 CurrentUser
+ *   1.8 SignOut
  * 
  * 2. Document Ready
  *   2.1 Watch Database + Initial Loader
@@ -51,10 +52,59 @@ var fdb = firebase.database();
 var dbRef = fdb.ref("/trainScheduler");
 
 // 0.3 Firebase Authentication
+var CurrentUser;
+
 // Initialize the FirebaseUI Widget using Firebase.
 var ui = new firebaseui.auth.AuthUI(firebase.auth());
 
-ui.start('#firebaseui-auth-container', {
+// UI Configuration
+var uiConfig = {
+  callbacks: {
+    signInSuccessWithAuthResult: function (authResult, redirectUrl) {
+      // User successfully signed in.
+      // Return type determines whether we continue the redirect automatically
+      // or whether we leave that to developer to handle.
+      // return true;
+
+      console.log("Auth Result", authResult);
+      console.log("Redirect URL", redirectUrl);
+      updateCurrentUser();
+      $("#authModal-close").click();
+      return false;
+    },
+
+    // signInFailure callback must be provided to handle merge conflicts which
+    // occur when an existing credential is linked to an anonymous user.
+    signInFailure: function (error) {
+      // For merge conflicts, the error.code will be
+      // 'firebaseui/anonymous-upgrade-merge-conflict'.
+      if (error.code != 'firebaseui/anonymous-upgrade-merge-conflict') {
+        return Promise.resolve();
+      }
+      // The credential the user tried to sign in with.
+      var cred = error.credential;
+      // Copy data from anonymous user to permanent user and delete anonymous
+      // user.
+      // ...
+      // Finish sign-in after data is copied.
+      return firebase.auth().signInWithCredential(cred);
+    },
+    uiShown: function () {
+      // The widget is rendered.
+      // Hide the loader.
+      document.getElementById('loader').style.display = 'none';
+    }
+  },
+
+
+  // Will use popup for IDP Providers sign-in flow instead of the default, redirect.
+  signInFlow: 'popup',
+
+  // Whether to upgrade anonymous users should be explicitly provided.
+  // The user must already be signed in anonymously before FirebaseUI is
+  // rendered.
+  autoUpgradeAnonymousUsers: true,
+  signInSuccessUrl: '/',
   signInOptions: [{
       provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
       requireDisplayName: false
@@ -71,21 +121,51 @@ ui.start('#firebaseui-auth-container', {
       }
     },
     firebase.auth.GithubAuthProvider.PROVIDER_ID
-  ]
-});
+  ],
+  // Terms of service url.
+  // tosUrl: '<your-tos-url>',
+  // Privacy policy url.
+  // privacyPolicyUrl: '<your-privacy-policy-url>'
+}; // END uiConfig
 
-// Get the currently signed-in user
-var User = firebase.auth().currentUser;
-if (User) {
-  // User is signed in.
-  $("#sign-in").hide();
-  $("#sign-out").show();
+// The start method will wait until the DOM is loaded.
+ui.start('#firebaseui-auth-container', uiConfig);
 
-} else {
-  // No user is signed in.
-  $("#sign-in").show();
-  $("#sign-out").hide();
-}
+// ui.start('#firebaseui-auth-container', {
+//   signInOptions: [{
+//       provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+//       requireDisplayName: false
+//     },
+//     {
+//       provider: firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+//       scopes: [
+//         'https://www.googleapis.com/auth/contacts.readonly'
+//       ],
+//       customParameters: {
+//         // Forces account selection even when one account
+//         // is available.
+//         prompt: 'select_account'
+//       }
+//     },
+//     firebase.auth.GithubAuthProvider.PROVIDER_ID
+//   ]
+// });
+
+// https://firebase.google.com/docs/auth/web/auth-state-persistence
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
+  .then(function () {
+    // Existing and future Auth states are now persisted in the current
+    // session only. Closing the window would clear any existing state even
+    // if a user forgets to sign out.
+    // ...
+    // New sign-in will be persisted with session persistence.
+    return firebase.auth().signInWithEmailAndPassword(email, password);
+  })
+  .catch(function (error) {
+    // Handle Errors here.
+    var errorCode = error.code;
+    var errorMessage = error.message;
+  });
 
 // 0.4 scheduleTableFields 
 var scheduleTableFields = ["train-name", "train-destination", "train-frequency", "next-arrival", "minutes-away"];
@@ -292,7 +372,31 @@ var startClock = function (divSelector) {
 }; // END startClock
 
 /**
- * 1.7 SignOut
+ * 1.7 updateCurrentUser
+ * Gets the currently signed-in user if there is one. 
+ */
+var updateCurrentUser = function () {
+  var user = firebase.auth().currentUser;
+
+  if (user) {
+    // User is signed in.
+    $("#sign-in").hide();
+    $("#sign-out").show();
+    CurrentUser = user;
+    console.log("Current User", CurrentUser);
+    $("#user-display-name").html("Hello, " + CurrentUser.displayName + "&nbsp;&nbsp;&nbsp;|");
+
+  } else {
+    // No user is signed in.
+    $("#sign-in").show();
+    $("#sign-out").hide();
+  }
+
+  return;
+}; // END CurrentUser
+
+/**
+ * 1.8 SignOut
  */
 var SignOut = function () {
   firebase.auth().signOut().then(function () {
@@ -319,5 +423,8 @@ $(function () {
   // 2.3 Update Train Schedule Every minute
   var intervalID = setInterval(updateTrainSchedule, 60 * 1000);
   startClock();
+
+  // Check if User Logged In and update CurrentUser global
+  updateCurrentUser();
 
 }); // END document ready

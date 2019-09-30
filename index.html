@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <link href="assets/images/icons8-rock-and-roll-hand-32.png" rel="shortcut icon">
+  <link href="assets/images/train-scheduler-icon.png" rel="shortcut icon">
   <meta name="description"
-    content="This app will display up-to-date sample data for arrival and departure times for trains. This includes how many minutes until next arrival as the data will be updated real-time. New trains can be added to the scheduler by administrators.">
+    content="This app will display up-to-date train schedule for arrival and departure times. This includes how many minutes until next arrival as the data will be updated real-time. New trains can be added to the scheduler by administrators.">
   <title>Train Scheduler</title>
 
   <!-- Google Fonts -->
@@ -33,9 +33,12 @@
         <div class="collapse navbar-collapse show">
           <ul class="navbar-nav ml-auto">
             <!-- Links -->
+            <li class="nav-item">
+              <span class="nav-link" id="user-display-name"></span>
+            </li>
             <li class="nav-item active">
               <a class="nav-link" id="sign-in" data-toggle="modal" data-target="#authModal">Sign In</a>
-              <a class="nav-link" id="sign-out" onclick="SignOut();">Sign Out</a>
+              <a class="nav-link" id="sign-out" onclick="SignOut();">Logout</a>
             </li>
           </ul>
         </div><!-- .navbar-collapse -->
@@ -56,6 +59,9 @@
         <div class="collapse navbar-collapse" id="navbarToggleMenu">
           <div class="bg-dark p-3">
             <ul class="navbar-nav mr-auto">
+              <li class="nav-item">
+                <span class="nav-link" id="user-display-name"></span>
+              </li>
               <li class="nav-item active">
                 <a class="nav-link" id="sign-in" data-toggle="modal" data-target="#authModal">Sign In</a>
                 <a class="nav-link" id="sign-out" onclick="SignOut();">Sign Out</a>
@@ -81,11 +87,11 @@
         </div><!-- .modal-header -->
         <div class="modal-body">
           <div id="firebaseui-auth-container"></div>
-          <!-- <div id="loader">Loading...</div> -->
+          <div id="loader">Loading...</div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
+          <button type="button" class="btn btn-secondary" id="authModal-close" data-dismiss="modal">Close</button>
+          <!-- <button type="button" class="btn btn-primary" id="authModal-save">Save changes</button> -->
         </div>
       </div><!-- .modal-content -->
     </div><!-- .modal-dialog -->
