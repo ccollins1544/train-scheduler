@@ -17,6 +17,7 @@
  *   1.3 addTrain
  *   1.4 trainMinutesAway
  *   1.5 updateTrainSchedule
+ *   1.6 startClock
  * 
  * 2. Document Ready
  *   2.1 Watch Database + Initial Loader
@@ -24,7 +25,6 @@
  *   2.3 Update Train Schedule Every minute
  * 
  * @todo
- * -Update 'next-arrival' and 'minutes-away' every minute. 
  * -Add [update] and [remove] buttons for each train. Updating should allow changing: name, destination, and arrival time (where arrival time is relation to first-train-time).
  * -Make so only users that log into the site with their google or github accounts can use your site. Check out Firebase authentication.
  *********************************************************/
@@ -89,7 +89,7 @@ var firebaseWatcher = function (databaseReference, onChange = "child_added") {
       var minutesAway = trainMinutesAway(firstTime, tableData["train-frequency"]);
       var nextTrain = moment().add(minutesAway, "minutes");
 
-      tableData['next-arrival'] = moment(nextTrain).format("HH:mm");
+      tableData['next-arrival'] = moment(nextTrain).format("HH:mm a");
       tableData['minutes-away'] = minutesAway;
     }
 
@@ -192,6 +192,7 @@ var trainMinutesAway = function (firstTime, minFrequency) {
 
 /**
  * 1.5 updateTrainSchedule
+ * Reads database and updates train schedule. Re-calculates 'next-arrival' and 'minutes-away'.
  */
 var updateTrainSchedule = function () {
   dbRef.once('value', (snapshot) => {
@@ -221,7 +222,7 @@ var updateTrainSchedule = function () {
         var minutesAway = trainMinutesAway(firstTime, tableData["train-frequency"]);
         var nextTrain = moment().add(minutesAway, "minutes");
 
-        tableData['next-arrival'] = moment(nextTrain).format("HH:mm");
+        tableData['next-arrival'] = moment(nextTrain).format("HH:mm a");
         tableData['minutes-away'] = minutesAway;
       }
 
@@ -236,6 +237,19 @@ var updateTrainSchedule = function () {
   }); // END dbRef.once('value', (snapshot) => {
 }; // END updateTrainSchedule
 
+/**
+ * 1.6 startClock
+ * Displays current time and continues counting the seconds. 
+ * @param {string} divSelector - defaults to #clock
+ */
+var startClock = function(divSelector){
+  divSelector = (divSelector === undefined) ? "#clock" : divSelector;
+  setInterval(function(){
+    $(divSelector).html(moment().format('MMMM D, YYYY H:mm:ss A'));
+  },
+  1000);
+}; // END startClock
+
 /**===============[ 2. Document Ready ]==================== 
  * NOTE: $(function(){ === $(document).ready(function() {
  * it's the shorthand version of document ready. 
@@ -249,5 +263,6 @@ $(function () {
 
   // 2.3 Update Train Schedule Every minute
   var intervalID = setInterval(updateTrainSchedule, 60 * 1000);
+  startClock();
 
 }); // END document ready

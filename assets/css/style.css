@@ -589,6 +589,11 @@ section#title-section.jumbotron {
   padding: 0px;
 }
 
+#clock {
+  color: var(--button-text);
+  font-family: 'liquid_crystalregular', sans-serif;
+}
+
 #train-schedule tbody tr:hover {
   color: var(--accent-text);
   background-color: var(--body-text);
