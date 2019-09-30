@@ -2,7 +2,7 @@
  * Train Scheduler
  * @package Train Scheduler
  * @author Christopher Collins
- * @version 1.0.0
+ * @version 1.1.0
  * @license none (public domain)
  * 
  * ===============[ TABLE OF CONTENTS ]===================
@@ -89,11 +89,11 @@ var firebaseWatcher = function (databaseReference, onChange = "child_added") {
       var minutesAway = trainMinutesAway(firstTime, tableData["train-frequency"]);
       var nextTrain = moment().add(minutesAway, "minutes");
 
-      tableData['next-arrival'] = moment(nextTrain).format("HH:mm a");
+      tableData['next-arrival'] = moment(nextTrain).format("HH:mm A");
       tableData['minutes-away'] = minutesAway;
     }
 
-    console.log("TableData", tableData);
+    // console.log("TableData", tableData);
     addTrainToSchedule(tableData);
 
   }, function (errorObject) {
@@ -222,11 +222,11 @@ var updateTrainSchedule = function () {
         var minutesAway = trainMinutesAway(firstTime, tableData["train-frequency"]);
         var nextTrain = moment().add(minutesAway, "minutes");
 
-        tableData['next-arrival'] = moment(nextTrain).format("HH:mm a");
+        tableData['next-arrival'] = moment(nextTrain).format("HH:mm A");
         tableData['minutes-away'] = minutesAway;
       }
 
-      console.log("TableData", tableData);
+      // console.log("TableData", tableData);
       addTrainToSchedule(tableData);
 
     }); // END snapshot.forEach(function(snap)
