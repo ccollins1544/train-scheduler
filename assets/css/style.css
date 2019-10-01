@@ -1,7 +1,7 @@
 /**
  * MAIN CSS
  * Author:  Christopher Collins
- * Version: 1.1.0
+ * Version: 1.2.0
  * License: none (public domain)
  */
 /*------------------------------------------------------
@@ -666,113 +666,6 @@ section#title-section.jumbotron {
 #add-train.btn:hover i {
   display: inline-block;
   visibility: visible;
-}
-
-
-/*
-#button-section {
-  padding: 0;
-}
-
-#favorite-gif-buttons {
-  border-bottom: solid 1px var(--primary-menu-background);
-}
-
-#favorite-gif-buttons h4 {
-  margin-top: 10px;
-  margin-right: 15px;
-}
-
-#search-type::-ms-expand {
-  display: none;
-}
-
-#search-type {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 900;
-  color: var(--accent-text);
-  font-size: 2rem;
-  border: none;
-  box-shadow: -1px 1px 3px 0px var(--primary-menu-background);
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-}
-
-#search-type:hover {
-  background-color: #fff;
-  border-color: var(--primary-menu-background);
-  box-shadow: 0px 5px 6px 2px var(--primary-menu-background);
-}
-
-#search-input {
-  width: 275px;
-  font-size: 1.3em;
-  margin-right: 10px;
-}
-
-#main-nav,
-#mobile-nav {
-  padding: 0px;
-}
-
-#gif-search-form {
-  color: var(--secondary-menu-text);
-  align-items: baseline;
-  margin-top: 8px;
-  margin-bottom: 8px;
-}
-
-#gif-search-form h4,
-#movie-search-form {
-  margin-top: 10px;
-}
-
-#gif-search-form .form-check {
-  margin: 0 10px;
-}
-
-#gif-search-form .form-check-input[type=radio] {
-  position: absolute;
-  visibility: hidden;
-}
-
-#gif-search-form .form-control[type=number],
-#movie-search-form .form-control[type=number] {
-  height: 2em;
-  width: 100px;
-  margin-left: 10px;
-  margin-right: 15px;
-  font-family: 'Montserrat', sans-serif;
-  color: var(--secondary-menu-text);
-  border-color: var(--secondary-menu-background);
-  background-color: var(--secondary-menu-background);
-}
-
-#gif-search-form .form-check-label {
-  font-family: 'Montserrat', sans-serif;
-  cursor: pointer;
-}
-
-#movieType {
-  font-family: 'Montserrat', sans-serif;
-  color: var(--secondary-menu-text);
-  border-color: var(--secondary-menu-background);
-  background-color: var(--secondary-menu-background);
-  height: 36px;
-  margin-right: 15px;
-
-}
-
-/* 3.3 Results Cards
-/*------------------------------------------------------
-.card {
-  padding: 0px;
-}
-
-.table-dark {
-  color: var(--button-text);
-  background-color: var(--button-background);
 }
 
 /*------------------------------------------------------*/

@@ -2,7 +2,7 @@
  * Train Scheduler
  * @package Train Scheduler
  * @author Christopher Collins
- * @version 1.1.1
+ * @version 1.2.0
  * @license none (public domain)
  * 
  * ===============[ TABLE OF CONTENTS ]===================
@@ -22,21 +22,24 @@
  *   2.1 firebaseWatcher
  *   2.2 addTrainToSchedule
  *   2.3 addTrain
- *   2.4 trainMinutesAway
- *   2.5 updateTrainSchedule
- *   2.6 startClock
- *   2.7 CurrentUser
- *   2.8 SignOut
+ *   2.4 deleteTrain
+ *   2.5 editTrain
+ *   2.6 trainMinutesAway
+ *   2.7 updateTrainSchedule
+ *   2.8 startClock
+ *   2.9 CurrentUser
+ *   2.10 SignOut
  * 
  * 3. Document Ready
  *   3.1 Watch Database + Initial Loader
  *   3.2 Add Train on Submit
  *   3.3 Update Train Schedule Every minute
  *   3.4 Check if User Logged In and update CurrentUser global
+ *   3.5 Delete Train on click
+ *   3.6 Edit Train on click
  * 
  * @todo
- * -Add [update] and [remove] buttons for each train. Updating should allow changing: name, destination, and arrival time (where arrival time is relation to first-train-time).
- * -Make so only users that log into the site with their google or github accounts can use your site. Check out Firebase authentication.
+ * -Add [update] functionality to update train data.
  *********************************************************/
 /* ===============[ 0. GLOBALS ]=========================*/
 // 0.1 scheduleTableFields 
@@ -84,7 +87,6 @@ var uiConfig = {
       // return true;
 
       console.log("Auth Result", authResult);
-      console.log("Redirect URL", redirectUrl);
       updateCurrentUser();
       $("#authModal-close").click();
       return false; // set to false because we are not redirecting to the signInSuccessUrl
@@ -148,26 +150,6 @@ var uiConfig = {
 // The start method will wait until the DOM is loaded.
 ui.start('#firebaseui-auth-container', uiConfig);
 
-// ui.start('#firebaseui-auth-container', {
-//   signInOptions: [{
-//       provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
-//       requireDisplayName: false
-//     },
-//     {
-//       provider: firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-//       scopes: [
-//         'https://www.googleapis.com/auth/contacts.readonly'
-//       ],
-//       customParameters: {
-//         // Forces account selection even when one account
-//         // is available.
-//         prompt: 'select_account'
-//       }
-//     },
-//     firebase.auth.GithubAuthProvider.PROVIDER_ID
-//   ]
-// });
-
 /**
  * 0.3.4 Persist Authentication
  * https://firebase.google.com/docs/auth/web/auth-state-persistence
@@ -206,13 +188,17 @@ var firebaseWatcher = function (databaseReference, onChange = "child_added") {
 
   // Firebase watcher + initial loader 
   databaseReference.on(onChange, function (snap) {
-    // console.log(snap.val());
 
     var tableData = {};
     var firstTime = false;
+    var uniqueKey = false;
     for (var property in snap.val()) {
       if (snap.val().hasOwnProperty(property)) {
         // console.log(property + " : " + snap.val()[property]);
+
+        if (uniqueKey === false) {
+          uniqueKey = snap.key;
+        }
 
         if (scheduleTableFields.includes(property)) {
           tableData[property] = snap.val()[property];
@@ -233,7 +219,7 @@ var firebaseWatcher = function (databaseReference, onChange = "child_added") {
       tableData['minutes-away'] = minutesAway;
     }
 
-    // console.log("TableData", tableData);
+    tableData['key'] = uniqueKey;
     addTrainToSchedule(tableData);
 
   }, function (errorObject) {
@@ -261,13 +247,17 @@ var addTrainToSchedule = function (tableRowObj) {
     }
 
   } // loop through scheduleTableFields
-  
-  if( CurrentUser !== undefined && CurrentUser !== null ){
+
+  if (CurrentUser !== undefined && CurrentUser !== null) {
     var editIcon = $("<i>").addClass("fas fa-pencil-alt edit");
     var deleteIcon = $("<i>").addClass("fas fa-trash-alt delete mr-4");
     var updateIcons = $("<span>").append(deleteIcon, editIcon);
 
-    newRow.find(":last-child").addClass("d-flex justify-content-between").append(updateIcons); 
+    newRow.find(":last-child").addClass("d-flex justify-content-between").append(updateIcons);
+  }
+
+  if (tableRowObj.hasOwnProperty('key')) {
+    newRow.attr("data-key", tableRowObj['key']);
   }
 
   $("#train-schedule > tbody").append(newRow);
@@ -281,7 +271,7 @@ var addTrainToSchedule = function (tableRowObj) {
 function addTrain(event) {
   event.preventDefault();
 
-  if( CurrentUser === undefined || CurrentUser === null ){
+  if (CurrentUser === undefined || CurrentUser === null) {
     $('#authModal').modal(); // Restrict access to logged in users only. 
     return;
   }
@@ -317,8 +307,47 @@ function addTrain(event) {
 
 } // END addTrain
 
+
 /**
- * 2.4 trainMinutesAway
+ * 2.4 deleteTrain
+ * Gets uniqueKey from table-row and deletes it from the database.
+ */
+function deleteTrain() {
+  if (CurrentUser === undefined || CurrentUser === null) {
+    $('#authModal').modal(); // Restrict access to logged in users only. 
+    return;
+  }
+
+  var uniqueKey = $(this).closest('tr').data('key');
+  var childRef = dbRef.child(uniqueKey);
+
+  childRef.remove().then(function () {
+    console.log("Remove succeeded.");
+
+  }).catch(function (error) {
+    console.log("Remove failed: " + error.message);
+  });
+
+  $(this).closest('tr').remove();
+} // END deleteTrain
+
+/**
+ * 2.5 editTrain
+ * Gets uniqueKey from table-row and allows changing values and updates the database.
+ * https://firebase.google.com/docs/reference/js/firebase.database.Reference.html#update
+ */
+function editTrain() {
+  if (CurrentUser === undefined || CurrentUser === null) {
+    $('#authModal').modal(); // Restrict access to logged in users only. 
+    return;
+  }
+
+  var uniqueKey = $(this).closest('tr').data('key');
+  console.log("Edit Key", uniqueKey);
+} // END editTrain
+
+/**
+ * 2.6 trainMinutesAway
  * @param {string} firstTime - first time train runs HH:mm [military time]
  * @param {integer} minFrequency - 
  * @return {integer} minutesAway - time in minutes until next train. 
@@ -344,7 +373,7 @@ var trainMinutesAway = function (firstTime, minFrequency) {
 } // END trainMinutesAway
 
 /**
- * 2.5 updateTrainSchedule
+ * 2.7 updateTrainSchedule
  * Reads database and updates train schedule. Re-calculates 'next-arrival' and 'minutes-away'.
  */
 var updateTrainSchedule = function () {
@@ -359,9 +388,14 @@ var updateTrainSchedule = function () {
 
       var tableData = {};
       var firstTime = false;
+      var uniqueKey = false;
       for (var property in snap.val()) {
         if (snap.val().hasOwnProperty(property)) {
           // console.log(property + " : " + snap.val()[property]);
+
+          if (uniqueKey === false) {
+            uniqueKey = snap.key;
+          }
 
           if (scheduleTableFields.includes(property)) {
             tableData[property] = snap.val()[property];
@@ -381,7 +415,7 @@ var updateTrainSchedule = function () {
         tableData['minutes-away'] = minutesAway;
       }
 
-      // console.log("TableData", tableData);
+      tableData['key'] = uniqueKey;
       addTrainToSchedule(tableData);
 
     }); // END snapshot.forEach(function(snap)
@@ -393,7 +427,7 @@ var updateTrainSchedule = function () {
 }; // END updateTrainSchedule
 
 /**
- * 2.6 startClock
+ * 2.8 startClock
  * Displays current time and continues counting the seconds. 
  * @param {string} divSelector - defaults to #clock
  */
@@ -406,7 +440,7 @@ var startClock = function (divSelector) {
 }; // END startClock
 
 /**
- * 2.7 updateCurrentUser
+ * 2.9 updateCurrentUser
  * Gets the currently signed-in user if there is one. 
  */
 var updateCurrentUser = function () {
@@ -418,7 +452,6 @@ var updateCurrentUser = function () {
     $("#sign-out").show();
     $("#add-train-section").show();
     CurrentUser = user;
-    console.log("Current User", CurrentUser);
     $("#user-display-name").html("Hello, " + CurrentUser.displayName + "&nbsp;&nbsp;&nbsp;|");
     updateTrainSchedule();
 
@@ -428,6 +461,7 @@ var updateCurrentUser = function () {
     $("#sign-out").hide();
     $("#add-train-section").hide();
     $("#user-display-name").empty();
+    CurrentUser = null; // Force this to be null
     updateTrainSchedule();
   }
 
@@ -435,17 +469,15 @@ var updateCurrentUser = function () {
 }; // END CurrentUser
 
 /**
- * 2.8 SignOut
+ * 2.10 SignOut
  */
 var SignOut = function () {
   firebase.auth().signOut().then(function () {
     // Sign-out successful.
-    CurrentUser = null; // Force this to be null
     updateCurrentUser();
 
     // The start method will wait until the DOM is loaded.
     ui.start('#firebaseui-auth-container', uiConfig);
-
     console.log("Sign-out Successful");
 
   }).catch(function (error) {
@@ -475,4 +507,11 @@ $(function () {
   $("#user-display-name").empty();
   $("#add-train-section").hide();
   setTimeout(updateCurrentUser, 1000);
+
+  // 3.5 Delete Train on click
+  $("#train-schedule").on('click', '.delete', deleteTrain);
+
+  // 3.6 Edit Train on click
+  $("#train-schedule").on('click', '.edit', editTrain);
+
 }); // END document ready
