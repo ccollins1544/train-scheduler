@@ -447,27 +447,24 @@ var startClock = function (divSelector) {
  * Gets the currently signed-in user if there is one. 
  */
 var updateCurrentUser = function () {
-  var user = firebase.auth().currentUser;
-
-  if (user) {
+  if (firebase.auth().currentUser !== null) {
     // User is signed in.
+    CurrentUser = firebase.auth().currentUser;
     $("#sign-in").hide();
     $("#sign-out").show();
     $("#add-train-section").show();
-    CurrentUser = user;
     $("#user-display-name").html("Hello, " + CurrentUser.displayName + "&nbsp;&nbsp;&nbsp;|");
-    updateTrainSchedule();
-
+    
   } else {
     // No user is signed in.
+    CurrentUser = null; // Force this to be null
     $("#sign-in").show();
     $("#sign-out").hide();
     $("#add-train-section").hide();
     $("#user-display-name").empty();
-    CurrentUser = null; // Force this to be null
-    updateTrainSchedule();
   }
-
+  
+  updateTrainSchedule();
   return;
 }; // END CurrentUser
 
@@ -501,7 +498,7 @@ $(function () {
   $('#add-train-form').submit(addTrain);
 
   // 3.3 Update Train Schedule Every minute
-  var intervalID = setInterval(updateTrainSchedule, 60 * 1000);
+  setInterval(updateTrainSchedule, 60 * 1000);
   startClock();
 
   // 3.4 Check if User Logged In and update CurrentUser global
