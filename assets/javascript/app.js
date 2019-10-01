@@ -38,8 +38,6 @@
  *   3.5 Delete Train on click
  *   3.6 Edit Train on click
  * 
- * @todo
- * -Add [update] functionality to update train data.
  *********************************************************/
 /* ===============[ 0. GLOBALS ]=========================*/
 // 0.1 scheduleTableFields 
@@ -301,7 +299,24 @@ function addTrain(event) {
   }
 
   formData.dateAdded = firebase.database.ServerValue.TIMESTAMP;
-  dbRef.push(formData);
+
+  if ($("#add-train-form").data("action") === "update" && $("#add-train-form").data("key") !== "0") {
+    // Update
+    var uniqueKey = $("#add-train-form").data("key");
+    var childRef = dbRef.child(uniqueKey);
+    childRef.update(formData);
+
+    // Reset back to 'Add' action
+    $("#add-train-form").data("action", "add");
+    $("#add-train-form").data("key", "0");
+    var plusIcon = $("<i>").addClass("fas fa-plus");
+    $("#add-train").html("Submit ").append(plusIcon);
+
+    updateTrainSchedule();
+  } else {
+    // Add
+    dbRef.push(formData);
+  }
 
   // Clear Form Values
   $("#add-train-form *").filter(":input").each(function () {
@@ -346,7 +361,22 @@ function editTrain() {
   }
 
   var uniqueKey = $(this).closest('tr').data('key');
-  console.log("Edit Key", uniqueKey);
+
+  rowArray = [];
+  $(this).closest('tr').children().each(function () {
+    rowArray.push($(this).text());
+  });
+
+  for (var i = 0; i < rowArray.length; i++) {
+    var inputID = "#" + scheduleTableFields[i];
+    $(inputID).val(rowArray[i]);
+  }
+
+  $("#add-train-form").data("key", uniqueKey);
+  $("#add-train-form").data("action", "update");
+  var plusIcon = $("<i>").addClass("fas fa-plus");
+  $("#add-train").html("Update ").append(plusIcon);
+
 } // END editTrain
 
 /**
@@ -454,7 +484,7 @@ var updateCurrentUser = function () {
     $("#sign-out").show();
     $("#add-train-section").show();
     $("#user-display-name").html("Hello, " + CurrentUser.displayName + "&nbsp;&nbsp;&nbsp;|");
-    
+
   } else {
     // No user is signed in.
     CurrentUser = null; // Force this to be null
@@ -463,7 +493,7 @@ var updateCurrentUser = function () {
     $("#add-train-section").hide();
     $("#user-display-name").empty();
   }
-  
+
   updateTrainSchedule();
   return;
 }; // END CurrentUser
