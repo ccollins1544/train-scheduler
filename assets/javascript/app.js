@@ -2,36 +2,46 @@
  * Train Scheduler
  * @package Train Scheduler
  * @author Christopher Collins
- * @version 1.1.0
+ * @version 1.1.1
  * @license none (public domain)
  * 
  * ===============[ TABLE OF CONTENTS ]===================
  * 0. Globals
+ *   0.1 scheduleTableFields
+ * 
+ * 1. Firebase
  *   0.1 Firebase Configuration
  *   0.2 Initialize Firebase
  *   0.3 Firebase Authentication
- *   0.4 scheduleTableFields
+ *     0.3.1 Store CurrentUser as global
+ *     0.3.2 Initialize the FirebaseUI Widget
+ *     0.3.3 UI Configuration
+ *     0.3.4 Persist Authentication
  * 
- * 1. Functions
- *   1.1 firebaseWatcher
- *   1.2 addTrainToSchedule
- *   1.3 addTrain
- *   1.4 trainMinutesAway
- *   1.5 updateTrainSchedule
- *   1.6 startClock
- *   1.7 CurrentUser
- *   1.8 SignOut
+ * 2. Functions
+ *   2.1 firebaseWatcher
+ *   2.2 addTrainToSchedule
+ *   2.3 addTrain
+ *   2.4 trainMinutesAway
+ *   2.5 updateTrainSchedule
+ *   2.6 startClock
+ *   2.7 CurrentUser
+ *   2.8 SignOut
  * 
- * 2. Document Ready
- *   2.1 Watch Database + Initial Loader
- *   2.2 Add Train on Submit
- *   2.3 Update Train Schedule Every minute
+ * 3. Document Ready
+ *   3.1 Watch Database + Initial Loader
+ *   3.2 Add Train on Submit
+ *   3.3 Update Train Schedule Every minute
+ *   3.4 Check if User Logged In and update CurrentUser global
  * 
  * @todo
  * -Add [update] and [remove] buttons for each train. Updating should allow changing: name, destination, and arrival time (where arrival time is relation to first-train-time).
  * -Make so only users that log into the site with their google or github accounts can use your site. Check out Firebase authentication.
  *********************************************************/
 /* ===============[ 0. GLOBALS ]=========================*/
+// 0.1 scheduleTableFields 
+var scheduleTableFields = ["train-name", "train-destination", "train-frequency", "next-arrival", "minutes-away"];
+
 /**
  * 0.1 Firebase Configuration
  * https://firebase.google.com/docs/database/admin/retrieve-data
@@ -51,13 +61,20 @@ firebase.initializeApp(firebaseConfig);
 var fdb = firebase.database();
 var dbRef = fdb.ref("/trainScheduler");
 
-// 0.3 Firebase Authentication
+/**
+ * 0.3 Firebase Authentication
+ */
+// 0.3.1 Store CurrentUser as global
 var CurrentUser;
 
-// Initialize the FirebaseUI Widget using Firebase.
+// 0.3.2 Initialize the FirebaseUI Widget
 var ui = new firebaseui.auth.AuthUI(firebase.auth());
 
-// UI Configuration
+/**
+ * 0.3.3 UI Configuration
+ * Sets up the signInOptions and default UI on our target DOM element #firebaseui-auth-container.
+ * Callbacks handle what happens on login success and login failure.
+ */
 var uiConfig = {
   callbacks: {
     signInSuccessWithAuthResult: function (authResult, redirectUrl) {
@@ -70,7 +87,7 @@ var uiConfig = {
       console.log("Redirect URL", redirectUrl);
       updateCurrentUser();
       $("#authModal-close").click();
-      return false;
+      return false; // set to false because we are not redirecting to the signInSuccessUrl
     },
 
     // signInFailure callback must be provided to handle merge conflicts which
@@ -151,28 +168,32 @@ ui.start('#firebaseui-auth-container', uiConfig);
 //   ]
 // });
 
-// https://firebase.google.com/docs/auth/web/auth-state-persistence
-firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
-  .then(function () {
-    // Existing and future Auth states are now persisted in the current
-    // session only. Closing the window would clear any existing state even
-    // if a user forgets to sign out.
-    // ...
-    // New sign-in will be persisted with session persistence.
-    return firebase.auth().signInWithEmailAndPassword(email, password);
-  })
-  .catch(function (error) {
-    // Handle Errors here.
-    var errorCode = error.code;
-    var errorMessage = error.message;
-  });
-
-// 0.4 scheduleTableFields 
-var scheduleTableFields = ["train-name", "train-destination", "train-frequency", "next-arrival", "minutes-away"];
-
-/* ===============[ 1. Functions ]=======================*/
 /**
- * 1.1 firebaseWatcher
+ * 0.3.4 Persist Authentication
+ * https://firebase.google.com/docs/auth/web/auth-state-persistence
+ * NOTE: The default is Persistance.LOCAL which means we don't need to worry about setting persistance
+ * unless we want to persist when the current tab is open. The main issue I was having before was 
+ * I needed to delay the function updateCurrentUser by 500milliseconds before page load in order 
+ * to capture the CurrentUser.
+ *************************************************************************************************
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).then(function () {
+  // Existing and future Auth states are now persisted in the current
+  // session only. Closing the window would clear any existing state even
+  // if a user forgets to sign out.
+  // ...
+  // New sign-in will be persisted with session persistence.
+  return firebase.auth().signInWithEmailAndPassword(email, password);
+
+}).catch(function (error) {
+  // Handle Errors here.
+  var errorCode = error.code;
+  var errorMessage = error.message;
+});
+*/
+
+/* ===============[ 2. Functions ]=======================*/
+/**
+ * 2.1 firebaseWatcher
  * Watches firebase database for either a 'value' or 'child_added' and fetches fields that match scheduleTableFields 
  * array and saves them to tableData. Then finally calls addTrainToSchedule(tableData) when event occurs.
  * 
@@ -222,7 +243,7 @@ var firebaseWatcher = function (databaseReference, onChange = "child_added") {
 } // END firebaseWatcher
 
 /**
- * 1.2 addTrainToSchedule
+ * 2.2 addTrainToSchedule
  * Adds a row to #train-schedule table body. 
  * @param {object} tableRowObj - properties in this object must be inside the global scheduleTableFields
  */
@@ -245,12 +266,17 @@ var addTrainToSchedule = function (tableRowObj) {
 } // END addTrainToSchedule
 
 /**
- * 1.3 addTrain
+ * 2.3 addTrain
  * Gets form data from #add-train-form adds it to the database.
  * @param {object} event 
  */
 function addTrain(event) {
   event.preventDefault();
+
+  if( CurrentUser === undefined || CurrentUser === null ){
+    $('#authModal').modal(); // Restrict access to logged in users only. 
+    return;
+  }
 
   var formArray = $("#add-train-form").serializeArray();
   var formData = {}; // NOTE: {} creates and object and [] creates an Array.
@@ -270,7 +296,7 @@ function addTrain(event) {
       }
 
     }
-    formData[KEY] = VALUE;
+    formData[KEY] = VALUE.trim();
   }
 
   formData.dateAdded = firebase.database.ServerValue.TIMESTAMP;
@@ -284,7 +310,7 @@ function addTrain(event) {
 } // END addTrain
 
 /**
- * 1.4 trainMinutesAway
+ * 2.4 trainMinutesAway
  * @param {string} firstTime - first time train runs HH:mm [military time]
  * @param {integer} minFrequency - 
  * @return {integer} minutesAway - time in minutes until next train. 
@@ -310,7 +336,7 @@ var trainMinutesAway = function (firstTime, minFrequency) {
 } // END trainMinutesAway
 
 /**
- * 1.5 updateTrainSchedule
+ * 2.5 updateTrainSchedule
  * Reads database and updates train schedule. Re-calculates 'next-arrival' and 'minutes-away'.
  */
 var updateTrainSchedule = function () {
@@ -359,7 +385,7 @@ var updateTrainSchedule = function () {
 }; // END updateTrainSchedule
 
 /**
- * 1.6 startClock
+ * 2.6 startClock
  * Displays current time and continues counting the seconds. 
  * @param {string} divSelector - defaults to #clock
  */
@@ -372,7 +398,7 @@ var startClock = function (divSelector) {
 }; // END startClock
 
 /**
- * 1.7 updateCurrentUser
+ * 2.7 updateCurrentUser
  * Gets the currently signed-in user if there is one. 
  */
 var updateCurrentUser = function () {
@@ -382,25 +408,33 @@ var updateCurrentUser = function () {
     // User is signed in.
     $("#sign-in").hide();
     $("#sign-out").show();
+    $("#add-train-section").show();
     CurrentUser = user;
     console.log("Current User", CurrentUser);
     $("#user-display-name").html("Hello, " + CurrentUser.displayName + "&nbsp;&nbsp;&nbsp;|");
-
+    
   } else {
     // No user is signed in.
     $("#sign-in").show();
     $("#sign-out").hide();
+    $("#add-train-section").hide();
+    $("#user-display-name").empty();
   }
 
   return;
 }; // END CurrentUser
 
 /**
- * 1.8 SignOut
+ * 2.8 SignOut
  */
 var SignOut = function () {
   firebase.auth().signOut().then(function () {
     // Sign-out successful.
+    updateCurrentUser();
+
+    // The start method will wait until the DOM is loaded.
+    ui.start('#firebaseui-auth-container', uiConfig);
+
     console.log("Sign-out Successful");
 
   }).catch(function (error) {
@@ -409,22 +443,25 @@ var SignOut = function () {
   });
 }; // END SignOut
 
-/**===============[ 2. Document Ready ]==================== 
+/**===============[ 3. Document Ready ]==================== 
  * NOTE: $(function(){ === $(document).ready(function() {
  * it's the shorthand version of document ready. 
  *********************************************************/
 $(function () {
-  // 2.1 Watch Database + Initial Loader
+  // 3.1 Watch Database + Initial Loader
   firebaseWatcher();
 
-  // 2.2 Add Train on Submit
+  // 3.2 Add Train on Submit
   $('#add-train-form').submit(addTrain);
 
-  // 2.3 Update Train Schedule Every minute
+  // 3.3 Update Train Schedule Every minute
   var intervalID = setInterval(updateTrainSchedule, 60 * 1000);
   startClock();
 
-  // Check if User Logged In and update CurrentUser global
-  updateCurrentUser();
-
+  // 3.4 Check if User Logged In and update CurrentUser global
+  $("#sign-in").show();
+  $("#sign-out").hide();
+  $("#user-display-name").empty();
+  $("#add-train-section").hide();
+  setTimeout(updateCurrentUser, 500);
 }); // END document ready
