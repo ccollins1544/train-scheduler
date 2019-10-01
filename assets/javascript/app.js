@@ -420,13 +420,15 @@ var updateCurrentUser = function () {
     CurrentUser = user;
     console.log("Current User", CurrentUser);
     $("#user-display-name").html("Hello, " + CurrentUser.displayName + "&nbsp;&nbsp;&nbsp;|");
-    
+    updateTrainSchedule();
+
   } else {
     // No user is signed in.
     $("#sign-in").show();
     $("#sign-out").hide();
     $("#add-train-section").hide();
     $("#user-display-name").empty();
+    updateTrainSchedule();
   }
 
   return;
