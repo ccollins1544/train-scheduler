@@ -600,6 +600,21 @@ section#title-section.jumbotron {
   background-color: var(--body-text);
 }
 
+#train-schedule tbody tr td i {
+  display: none;
+  visibility: hidden;
+}
+
+#train-schedule tbody tr:hover td i {
+  display: inline-block;
+  visibility: visible;
+}
+
+.delete,
+.edit {
+  cursor: pointer;
+}
+
 #train-schedule.table {
   margin-bottom: 0px;
 }

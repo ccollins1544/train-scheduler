@@ -261,6 +261,14 @@ var addTrainToSchedule = function (tableRowObj) {
     }
 
   } // loop through scheduleTableFields
+  
+  if( CurrentUser !== undefined && CurrentUser !== null ){
+    var editIcon = $("<i>").addClass("fas fa-pencil-alt edit");
+    var deleteIcon = $("<i>").addClass("fas fa-trash-alt delete mr-4");
+    var updateIcons = $("<span>").append(deleteIcon, editIcon);
+
+    newRow.find(":last-child").addClass("d-flex justify-content-between").append(updateIcons); 
+  }
 
   $("#train-schedule > tbody").append(newRow);
 } // END addTrainToSchedule
@@ -463,5 +471,5 @@ $(function () {
   $("#sign-out").hide();
   $("#user-display-name").empty();
   $("#add-train-section").hide();
-  setTimeout(updateCurrentUser, 500);
+  setTimeout(updateCurrentUser, 1000);
 }); // END document ready
