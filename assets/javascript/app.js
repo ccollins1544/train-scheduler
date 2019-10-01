@@ -295,6 +295,9 @@ function addTrain(event) {
 
     }
     formData[KEY] = VALUE.trim();
+    if (formData[KEY] === "") {
+      return; // prevent empty entries into database
+    }
   }
 
   formData.dateAdded = firebase.database.ServerValue.TIMESTAMP;
