@@ -440,6 +440,7 @@ var updateCurrentUser = function () {
 var SignOut = function () {
   firebase.auth().signOut().then(function () {
     // Sign-out successful.
+    CurrentUser = null; // Force this to be null
     updateCurrentUser();
 
     // The start method will wait until the DOM is loaded.
