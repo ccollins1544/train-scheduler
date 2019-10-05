@@ -10,13 +10,13 @@
  *   0.1 scheduleTableFields
  * 
  * 1. Firebase
- *   0.1 Firebase Configuration
- *   0.2 Initialize Firebase
- *   0.3 Firebase Authentication
- *     0.3.1 Store CurrentUser as global
- *     0.3.2 Initialize the FirebaseUI Widget
- *     0.3.3 UI Configuration
- *     0.3.4 Persist Authentication
+ *   1.1 Firebase Configuration
+ *   1.2 Initialize Firebase
+ *   1.3 Firebase Authentication
+ *     1.3.1 Store CurrentUser as global
+ *     1.3.2 Initialize the FirebaseUI Widget
+ *     1.3.3 UI Configuration
+ *     1.3.4 Persist Authentication
  * 
  * 2. Functions
  *   2.1 firebaseWatcher
@@ -43,8 +43,9 @@
 // 0.1 scheduleTableFields 
 var scheduleTableFields = ["train-name", "train-destination", "train-frequency", "next-arrival", "minutes-away"];
 
+/* ===============[ 1. Firebase ]=========================*/
 /**
- * 0.1 Firebase Configuration
+ * 1.1 Firebase Configuration
  * https://firebase.google.com/docs/database/admin/retrieve-data
  */
 var firebaseConfig = {
@@ -57,22 +58,22 @@ var firebaseConfig = {
   appId: "1:541445299555:web:d9ceca0430a78546108756"
 };
 
-// 0.2 Initialize Firebase
+// 1.2 Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 var fdb = firebase.database();
 var dbRef = fdb.ref("/trainScheduler");
 
 /**
- * 0.3 Firebase Authentication
+ * 1.3 Firebase Authentication
  */
-// 0.3.1 Store CurrentUser as global
+// 1.3.1 Store CurrentUser as global
 var CurrentUser;
 
-// 0.3.2 Initialize the FirebaseUI Widget
+// 1.3.2 Initialize the FirebaseUI Widget
 var ui = new firebaseui.auth.AuthUI(firebase.auth());
 
 /**
- * 0.3.3 UI Configuration
+ * 1.3.3 UI Configuration
  * Sets up the signInOptions and default UI on our target DOM element #firebaseui-auth-container.
  * Callbacks handle what happens on login success and login failure.
  */
@@ -149,7 +150,7 @@ var uiConfig = {
 ui.start('#firebaseui-auth-container', uiConfig);
 
 /**
- * 0.3.4 Persist Authentication
+ * 1.3.4 Persist Authentication
  * https://firebase.google.com/docs/auth/web/auth-state-persistence
  * NOTE: The default is Persistance.LOCAL which means we don't need to worry about setting persistance
  * unless we want to persist when the current tab is open. The main issue I was having before was 
